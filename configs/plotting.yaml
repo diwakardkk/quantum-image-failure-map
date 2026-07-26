@@ -1,0 +1,7 @@
+plotting:
+  style: paper
+  dpi: 300
+  formats: [png, pdf, svg]
+  font_size: 10
+  caption_font_size: 9
+

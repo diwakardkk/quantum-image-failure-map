@@ -1,0 +1,40 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+
+# Virtual environments
+.venv/
+venv/
+env/
+
+# Local caches and generated artifacts
+.matplotlib/
+cache/
+data/
+outputs/*
+!outputs/.gitkeep
+
+# Logs and server job files
+*.log
+server_run.log
+qifm_full_gpu*.pbs
+qifm_full_gpu*.log
+*.o[0-9]*
+*.e[0-9]*
+
+# Archives and large local transfer bundles
+*.tar
+*.tar.gz
+*.zip
+
+# OS/editor
+.DS_Store
+.idea/
+.vscode/
+

@@ -1,0 +1,48 @@
+project:
+  name: quantum_image_failure_map
+  output_root: outputs
+  data_root: data
+  mode: smoke
+datasets:
+  names: [fashion_mnist]
+subsets:
+  seeds: [11]
+  samples_per_class:
+    smoke: 20
+  validation_fraction: 0.25
+preprocessing:
+  variants: [resize_4, pca_4]
+quantum_models:
+  reference:
+    encoding: angle
+    features: 4
+    qubits: 4
+    layers: 1
+    entanglement: ring
+training:
+  epochs:
+    smoke: 2
+  batch_size: 8
+  learning_rate: 0.01
+  patience: 2
+encoding_experiment:
+  feature_counts: [2, 4]
+  preprocessing: [resize, pca]
+  encodings: [angle, amplitude]
+trainability_experiment:
+  gradient_thresholds: [1.0e-4, 1.0e-6]
+spatial_experiment:
+  translations: [0, 2]
+  rotations: [0, 15]
+  occlusions: [0, 20]
+reliability_experiment:
+  repeats:
+    smoke: 5
+  shots: [64, 256]
+  noise_strengths: [0, 0.01]
+utility_experiment:
+  train_sizes_per_class: [10, 20]
+statistics:
+  bootstrap_samples:
+    smoke: 100
+

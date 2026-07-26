@@ -1,0 +1,90 @@
+project:
+  name: quantum_image_failure_map
+  output_root: outputs
+  data_root: data
+  mode: pilot
+paths:
+  cache_dir: cache
+datasets:
+  names: [fashion_mnist, pneumoniamnist]
+  fashion_mnist:
+    classes: [0, 6]
+    class_names: ["T-shirt/top", "Shirt"]
+  pneumoniamnist:
+    class_names: ["normal", "pneumonia"]
+subsets:
+  seeds: [11, 22, 33, 44, 55]
+  extended_seeds: [11, 22, 33, 44, 55, 66, 77, 88, 99, 111]
+  samples_per_class:
+    smoke: 30
+    pilot: 150
+    full: 400
+  validation_fraction: 0.2
+  balanced_train: true
+preprocessing:
+  variants: [resize_4, pca_4, patch_2x2]
+  pca_components: [2, 4, 6, 8, 16, 32, 64]
+  resize_sizes: [4, 8]
+  patch_grids: [2, 4]
+  cnn_embedding_dims: [4, 6, 8, 16, 32]
+quantum_backend:
+  preferred: auto
+  analytic_shots: null
+  finite_shots: [64, 128, 256, 512, 1024, 2048, 4096]
+  noise_strengths: [0, 0.001, 0.0025, 0.005, 0.01, 0.02, 0.05]
+quantum_models:
+  reference:
+    encoding: angle
+    features: 4
+    qubits: 4
+    layers: 2
+    entanglement: ring
+    readout: first_z
+  trainability:
+    qubits: [4, 6, 8]
+    layers: [1, 2, 3, 4, 6, 8]
+    entanglement: [none, linear, ring]
+    initializations: [near_zero, xavier, uniform]
+classical_models:
+  enabled: [logistic_regression, linear_svm, rbf_svm, mlp, compact_cnn]
+  logistic_c: [0.1, 1.0, 10.0]
+  svm_c: [0.1, 1.0, 10.0]
+training:
+  epochs:
+    smoke: 3
+    pilot: 12
+    full: 40
+  batch_size: 16
+  learning_rate: 0.01
+  patience: 7
+  num_workers: 0
+encoding_experiment:
+  feature_counts: [2, 4, 6, 8, 16, 32, 64]
+  preprocessing: [resize, pca, patch, cnn_embedding]
+  encodings: [angle, amplitude, reuploading, patch_angle]
+trainability_experiment:
+  gradient_thresholds: [1.0e-4, 1.0e-6, 1.0e-8]
+spatial_experiment:
+  translations: [0, 1, 2, 3, 4, 5, 6]
+  rotations: [0, 5, 10, 15, 20, 25, 30]
+  occlusions: [0, 5, 10, 20, 30, 40]
+reliability_experiment:
+  repeats:
+    smoke: 5
+    pilot: 20
+    full: 50
+  noise_channels: [depolarizing, amplitude_damping, phase_damping, bit_flip, readout]
+utility_experiment:
+  train_sizes_per_class: [25, 50, 100, 200, 400]
+statistics:
+  bootstrap_samples:
+    smoke: 100
+    pilot: 500
+    full: 1000
+  ci: 0.95
+plotting:
+  dpi: 300
+  formats: [png, pdf, svg]
+logging:
+  level: INFO
+

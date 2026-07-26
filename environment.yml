@@ -1,0 +1,28 @@
+name: quantum-image-failure-map
+channels:
+  - conda-forge
+  - pytorch
+dependencies:
+  - python=3.11
+  - pip
+  - numpy
+  - pandas
+  - pyyaml
+  - scipy
+  - scikit-learn
+  - scikit-image
+  - matplotlib
+  - seaborn
+  - joblib
+  - tqdm
+  - psutil
+  - pytorch
+  - torchvision
+  - pyarrow
+  - openpyxl
+  - pytest
+  - pip:
+      - pennylane>=0.35
+      - pennylane-lightning>=0.35
+      - medmnist>=3.0
+

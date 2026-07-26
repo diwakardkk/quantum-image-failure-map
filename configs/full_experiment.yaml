@@ -1,0 +1,10 @@
+project:
+  mode: full
+datasets:
+  names: [fashion_mnist, pneumoniamnist]
+subsets:
+  seeds: [11, 22, 33, 44, 55]
+training:
+  epochs:
+    full: 40
+
