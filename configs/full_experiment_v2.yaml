@@ -1,0 +1,38 @@
+project:
+  mode: full
+  experiment_protocol_version: v2_failure_isolation
+datasets:
+  names: [fashion_mnist, pneumoniamnist]
+subsets:
+  seeds: [11, 22, 33, 44, 55]
+  samples_per_class:
+    full: 400
+preprocessing:
+  variants: [pca_4, pca_8, patch_2x2]
+v2:
+  pca_dimensions: [64, 32, 16, 8, 4, 2]
+  quantum_dimensions: [4, 8]
+  fidelity_samples_per_class: 25
+  compression_accuracy_drop_thresholds: [0.025, 0.05, 0.075, 0.10]
+  compression_variance_thresholds: [0.70, 0.80, 0.90]
+  problem2:
+    qubits: [4, 6, 8, 10, 12]
+    layers: [1, 2, 4, 6, 8, 10]
+    initialization_replicates:
+      pilot: 20
+      full: 30
+    subset_per_class: 16
+    cost_types: [global, local]
+    initialization_controls: [uniform, near_zero]
+  problem3:
+    rotations: [0, 5, 10, 15, 20]
+    translations: [0, 1, 2, 3, 4]
+    occlusions: [0, 10, 20, 30]
+  problem4:
+    shots: [64, 128, 256, 512, 1024, 2048, 4096]
+    repeats:
+      pilot: 20
+      full: 50
+  problem5:
+    train_sizes_per_class: [25, 50, 100, 200, 400]
+

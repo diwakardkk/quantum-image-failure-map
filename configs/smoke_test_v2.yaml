@@ -1,0 +1,53 @@
+project:
+  mode: smoke
+  experiment_protocol_version: v2_failure_isolation
+datasets:
+  names: [fashion_mnist]
+subsets:
+  seeds: [11]
+  samples_per_class:
+    smoke: 20
+  validation_fraction: 0.25
+preprocessing:
+  variants: [pca_4]
+quantum_models:
+  reference:
+    encoding: angle
+    features: 4
+    qubits: 4
+    layers: 1
+    entanglement: ring
+training:
+  epochs:
+    smoke: 2
+  batch_size: 8
+  learning_rate: 0.01
+v2:
+  pca_dimensions: [8, 4]
+  quantum_dimensions: [4]
+  fidelity_samples_per_class: 5
+  compression_accuracy_drop_thresholds: [0.05]
+  compression_variance_thresholds: [0.80]
+  problem2:
+    qubits: [4, 6]
+    layers: [1, 2]
+    initialization_replicates:
+      smoke: 3
+      pilot: 3
+      full: 3
+    subset_per_class: 4
+    cost_types: [global]
+    initialization_controls: [uniform]
+  problem3:
+    rotations: [0, 10]
+    translations: [0, 2]
+    occlusions: [0, 20]
+  problem4:
+    shots: [64, 256]
+    repeats:
+      smoke: 5
+      pilot: 5
+      full: 5
+  problem5:
+    train_sizes_per_class: [10, 20]
+

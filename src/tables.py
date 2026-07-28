@@ -45,10 +45,10 @@ def generate_tables(run_dir: Path) -> list[str]:
     content = {
         "T1_dataset_summary": _read_dataset_summaries(run_dir),
         "T2_reference_model_configuration": primary[["dataset", "model", "preprocessing"]].drop_duplicates() if not primary.empty else pd.DataFrame(),
-        "T3_encoding_information_and_resource_results": aggregated[aggregated.get("problem", pd.Series(dtype=int)) == 1] if not aggregated.empty else pd.DataFrame(),
-        "T4_trainability_and_gradient_results": aggregated[aggregated.get("problem", pd.Series(dtype=int)) == 2] if not aggregated.empty else pd.DataFrame(),
-        "T5_spatial_robustness_results": aggregated[aggregated.get("problem", pd.Series(dtype=int)) == 3] if not aggregated.empty else pd.DataFrame(),
-        "T6_shot_and_noise_reliability_results": aggregated[aggregated.get("problem", pd.Series(dtype=int)) == 4] if not aggregated.empty else pd.DataFrame(),
+        "T3_encoding_information_and_resource_results": _problem_rows(aggregated, 1),
+        "T4_trainability_and_gradient_results": _problem_rows(aggregated, 2),
+        "T5_spatial_robustness_results": _problem_rows(aggregated, 3),
+        "T6_shot_and_noise_reliability_results": _problem_rows(aggregated, 4),
         "T7_classical_quantum_performance": primary,
         "T8_end_to_end_resource_comparison": primary[[c for c in ["dataset", "model", "accuracy", "wall_time_seconds", "trainable_parameters"] if c in primary]] if not primary.empty else pd.DataFrame(),
         "T9_statistical_tests": pd.DataFrame(columns=["comparison", "effect_size", "p_value", "ci_low", "ci_high"]),
@@ -64,6 +64,12 @@ def generate_tables(run_dir: Path) -> list[str]:
     except Exception:
         pass
     return outputs
+
+
+def _problem_rows(df: pd.DataFrame, problem: int) -> pd.DataFrame:
+    if df.empty or "problem" not in df:
+        return pd.DataFrame()
+    return df[df["problem"] == problem].copy()
 
 
 def _read_dataset_summaries(run_dir: Path) -> pd.DataFrame:

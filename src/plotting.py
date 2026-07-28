@@ -122,10 +122,12 @@ def plot_encoding_accuracy(run_dir: Path) -> None:
     df = pd.read_csv(path)
     label = _dataset_label(run_dir, df)
     fig, ax = plt.subplots(figsize=(7.2, 4.6), constrained_layout=True)
-    for encoding, group in df.groupby("encoding"):
-        group = group.sort_values("feature_count")
+    xcol = "feature_count" if "feature_count" in df else "pca_dimension"
+    line_col = "encoding" if "encoding" in df else "model"
+    for encoding, group in df.groupby(line_col):
+        group = group.sort_values(xcol, ascending=False)
         ax.plot(
-            group["feature_count"],
+            group[xcol],
             group["accuracy"],
             marker="o",
             linewidth=2.4,
@@ -134,11 +136,11 @@ def plot_encoding_accuracy(run_dir: Path) -> None:
             label=encoding.replace("_", " ").title(),
         )
     ax.set_xscale("log", base=2)
-    ax.set_xticks(sorted(df["feature_count"].unique()))
+    ax.set_xticks(sorted(df[xcol].unique()))
     ax.get_xaxis().set_major_formatter(matplotlib.ticker.ScalarFormatter())
     ax.set_ylim(0.35, min(1.0, max(0.75, df["accuracy"].max() + 0.08)))
-    ax.set_xlabel("Encoded feature count")
-    ax.set_ylabel("Representation probe accuracy")
+    ax.set_xlabel("Feature dimension")
+    ax.set_ylabel("Probe accuracy")
     ax.set_title(f"{label}: Encoding Bottleneck")
     ax.axhline(0.5, color="#666666", linestyle="--", linewidth=1, label="Chance")
     ax.legend(frameon=False, loc="lower right")
@@ -159,6 +161,8 @@ def plot_gradient_diagnostics(run_dir: Path) -> None:
     df = pd.read_csv(path).copy()
     label = _dataset_label(run_dir, df)
     df["config_index"] = np.arange(1, len(df) + 1)
+    if "fraction_below_1e_6" not in df and "near_zero_fraction_1e_6" in df:
+        df["fraction_below_1e_6"] = df["near_zero_fraction_1e_6"]
     fig, ax1 = plt.subplots(figsize=(7.4, 4.6), constrained_layout=True)
     ax1.bar(df["config_index"], df["mean_abs_gradient"], color="#4C72B0", alpha=0.85, label="Mean |gradient|")
     ax1.axhline(1e-4, color="#C44E52", linestyle="--", linewidth=1.5, label="1e-4 floor")
@@ -189,12 +193,14 @@ def plot_spatial_diagnostics(run_dir: Path) -> None:
         return
     df = pd.read_csv(path).copy()
     label = _dataset_label(run_dir, df)
+    if "mean_absolute_change" not in df and "prediction_flip_rate_correct_only" in df:
+        df["mean_absolute_change"] = df["prediction_flip_rate_correct_only"].fillna(df.get("prediction_flip_rate_all", 0))
     df["name"] = df["transformation"].str.title() + "\n" + df["strength"].astype(str)
     colors = [PALETTE.get(t, "#4c78a8") for t in df["transformation"]]
     fig, ax = plt.subplots(figsize=(6.6, 4.5), constrained_layout=True)
     bars = ax.bar(df["name"], df["mean_absolute_change"], color=colors, alpha=0.9)
     ax.axhline(0.10, color="#C44E52", linestyle="--", linewidth=1.6, label="Failure threshold")
-    ax.set_ylabel("Mean absolute image change")
+    ax.set_ylabel("Flip rate / sensitivity")
     ax.set_xlabel("Label-preserving transformation")
     ax.set_title(f"{label}: Spatial Perturbation Sensitivity")
     ax.set_ylim(0, max(0.18, df["mean_absolute_change"].max() * 1.3))
@@ -217,6 +223,8 @@ def plot_shot_reliability(run_dir: Path) -> None:
         return
     df = pd.read_csv(path).copy()
     label = _dataset_label(run_dir, df)
+    if "flip_rate" not in df and "Flip_all" in df:
+        df["flip_rate"] = df["Flip_all"]
     df["category"] = np.where(df["model"].eq("vqc"), "VQC", "Classical baselines")
     summary = (
         df.groupby(["category", "shots"], as_index=False)
@@ -305,24 +313,46 @@ def plot_unified_dashboard(run_dir: Path, primary: pd.DataFrame) -> None:
     p2_path = _problem_file(run_dir, 2)
     if p2_path:
         p2 = pd.read_csv(p2_path)
-        values.append(float(p2["failure_indicator"].mean()))
+        if "failure_indicator" in p2:
+            p2_score = float(p2["failure_indicator"].mean())
+            p2_fail = int(p2["failure_indicator"].sum())
+        elif "near_zero_fraction_1e_6" in p2:
+            p2_score = float((p2["near_zero_fraction_1e_6"].fillna(0) >= 0.5).mean())
+            p2_fail = int((p2["near_zero_fraction_1e_6"].fillna(0) >= 0.5).sum())
+        else:
+            p2_score = 0.0
+            p2_fail = 0
+        values.append(p2_score)
         labels.append("Trainability")
-        notes.append(f"Failures {int(p2['failure_indicator'].sum())}/{len(p2)}")
+        notes.append(f"Failures {p2_fail}/{len(p2)}")
 
     p3_path = _problem_file(run_dir, 3)
     if p3_path:
         p3 = pd.read_csv(p3_path)
-        values.append(float(p3["failure_indicator"].mean()))
+        if "failure_indicator" in p3:
+            p3_score = float(p3["failure_indicator"].mean())
+        elif "prediction_flip_rate_correct_only" in p3:
+            p3_score = float((p3["prediction_flip_rate_correct_only"].fillna(0) >= 0.10).mean())
+        else:
+            p3_score = 0.0
+        values.append(p3_score)
         labels.append("Spatial")
-        notes.append("All mild transforms flagged" if p3["failure_indicator"].mean() == 1 else "Partial sensitivity")
+        notes.append("Model flips under transforms" if p3_score > 0 else "Limited sensitivity")
 
     p4_path = _problem_file(run_dir, 4)
     if p4_path:
         p4 = pd.read_csv(p4_path)
         vqc = p4[p4["model"].eq("vqc")]
-        values.append(float(vqc["failure_indicator"].mean()) if not vqc.empty else 0.0)
+        if "failure_indicator" in vqc:
+            p4_score = float(vqc["failure_indicator"].mean()) if not vqc.empty else 0.0
+        elif "Flip_correct" in vqc:
+            p4_score = float((vqc["Flip_correct"].fillna(0) >= 0.05).mean()) if not vqc.empty else 0.0
+        else:
+            p4_score = 0.0
+        values.append(p4_score)
         labels.append("Reliability")
-        notes.append(f"VQC flip {vqc['flip_rate'].mean():.2f}" if not vqc.empty else "No VQC")
+        flip_col = "flip_rate" if "flip_rate" in vqc else "Flip_all"
+        notes.append(f"VQC flip {vqc[flip_col].mean():.2f}" if not vqc.empty and flip_col in vqc else "No VQC")
 
     if not primary.empty:
         vqc = primary[primary["model"].eq("vqc")]

@@ -134,6 +134,27 @@ python scripts/run_all_experiments.py --config configs/default.yaml --mode pilot
 python scripts/run_all_experiments.py --config configs/full_experiment.yaml --mode full --resume
 ```
 
+Revised v2 failure-isolation protocol:
+
+```bash
+python scripts/run_all_experiments.py --config configs/pilot_experiment_v2.yaml --mode pilot --resume
+python scripts/run_all_experiments.py --config configs/full_experiment_v2.yaml --mode full --resume
+```
+
+The v2 protocol keeps the original repository structure and output format, but adds protocol-specific outputs under:
+
+```text
+problem1/
+problem2/
+problem3/
+problem4/
+problem5/
+metrics/hypothesis_summary.csv
+metrics/statistical_tests_v2.parquet
+```
+
+It is designed to distinguish compression loss, quantum utilisation gap, trainability scaling, model-level spatial robustness, margin-conditioned shot instability, and fair utility comparisons. V2 outcomes are classified as `supported`, `partially_supported`, `unsupported`, or `inconclusive`; the code does not hard-code the hypotheses as true.
+
 Run a capped integration check:
 
 ```bash
@@ -145,9 +166,20 @@ Individual problem commands:
 ```bash
 python scripts/run_problem1_encoding.py --config configs/full_experiment.yaml --resume
 python scripts/run_problem2_trainability.py --config configs/full_experiment.yaml --resume
+python scripts/run_problem2_scaling.py --config configs/full_experiment_v2.yaml --resume
 python scripts/run_problem3_spatial.py --config configs/full_experiment.yaml --resume
 python scripts/run_problem4_reliability.py --config configs/full_experiment.yaml --resume
 python scripts/run_problem5_utility.py --config configs/full_experiment.yaml --resume
+```
+
+V2 individual problem commands:
+
+```bash
+python scripts/run_problem1_encoding.py --config configs/full_experiment_v2.yaml --resume
+python scripts/run_problem2_scaling.py --config configs/full_experiment_v2.yaml --resume
+python scripts/run_problem3_spatial.py --config configs/full_experiment_v2.yaml --resume
+python scripts/run_problem4_reliability.py --config configs/full_experiment_v2.yaml --resume
+python scripts/run_problem5_utility.py --config configs/full_experiment_v2.yaml --resume
 ```
 
 Regenerate outputs from saved data:
